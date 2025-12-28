@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EXPECTATION - Invoice</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f2f2f2;
+  padding: 20px;
+}
+
+.invoice {
+  background: #fff;
+  padding: 25px;
+  max-width: 900px;
+  margin: auto;
+  border: 2px solid #000;
+}
+
+h1 {
+  text-align: center;
+  margin: 0;
+}
+
+.brand-sub {
+  text-align: center;
+  font-size: 13px;
+  margin-bottom: 15px;
+}
+
+label {
+  font-size: 13px;
+}
+
+input, select {
+  width: 100%;
+  padding: 6px;
+  box-sizing: border-box;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+th, td {
+  border: 1px solid #000;
+  padding: 6px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.right {
+  text-align: right;
+}
+
+button {
+  padding: 8px 14px;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+@media print {
+  button, .remove-btn {
+    display: none;
+  }
+  body {
+    background: #fff;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="invoice">
+  <h1>EXPECTATION</h1>
+  <div class="brand-sub">Clothing & Lifestyle</div>
+  <hr>
+
+  <div class="row">
+    <div>
+      <label>Invoice No</label>
+      <input id="invoiceNo" readonly>
+    </div>
+    <div>
+      <label>Date</label>
+      <input type="date">
+    </div>
+    <div>
+      <label>Customer Name</label>
+      <input placeholder="Customer Name">
+    </div>
+  </div>
+
+  <table id="productTable">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Size</th>
+        <th>Qty</th>
+        <th>Price</th>
+        <th>Total</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <select onchange="productChanged(this)"></select>
+        </td>
+        <td>
+          <select>
+            <option>S</option>
+            <option>M</option>
+            <option>L</option>
+            <option>XL</option>
+          </select>
+        </td>
+        <td><input type="number" value="1" oninput="calculate()"></td>
+        <td><input type="number" readonly></td>
+        <td class="right">0</td>
+        <td><button class="remove-btn" onclick="removeRow(this)">X</button></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <button onclick="addRow()">➕ Add Product</button>
+
+  <h3 class="right">Grand Total: ₹ <span id="grandTotal">0</span></h3>
+
+  <button onclick="prepareAndPrint()">🖨 Print Invoice</button>
+
+  <hr>
+  <p style="text-align:center;font-size:12px;">
+    Thank you for shopping with <b>EXPECTATION</b><br>
+    Exchange within 7 days with bill
+  </p>
+</div>
+
+<script>
+/* ===== PRODUCT MASTER ===== */
+const products = {
+  "Men T-Shirt": 699,
+  "Men Shirt": 1299,
+  "Jeans": 1499,
+  "Kurti": 999,
+  "Saree": 2499
+};
+
+/* ===== LOAD PRODUCTS ===== */
+function loadProducts(select) {
+  select.innerHTML = '<option value="">-- Select --</option>';
+  for (let p in products) {
+    select.innerHTML += `<option value="${p}">${p}</option>`;
+  }
+}
+loadProducts(document.querySelector("select"));
+
+/* ===== ADD ROW ===== */
+function addRow() {
+  const tbody = document.querySelector("#productTable tbody");
+  const row = tbody.rows[0].cloneNode(true);
+
+  row.querySelectorAll("input").forEach(i => i.value = "");
+  row.cells[4].innerText = "0";
+  loadProducts(row.querySelector("select"));
+
+  tbody.appendChild(row);
+}
+
+/* ===== REMOVE ROW ===== */
+function removeRow(btn) {
+  const tbody = document.querySelector("#productTable tbody");
+  if (tbody.rows.length > 1) {
+    btn.closest("tr").remove();
+    calculate();
+  }
+}
+
+/* ===== PRODUCT CHANGE ===== */
+function productChanged(select) {
+  const row = select.closest("tr");
+  row.cells[3].querySelector("input").value =
+    products[select.value] || "";
+  calculate();
+}
+
+/* ===== CALCULATION ===== */
+function calculate() {
+  let grand = 0;
+  document.querySelectorAll("#productTable tbody tr").forEach(row => {
+    const qty = row.cells[2].querySelector("input").value;
+    const price = row.cells[3].querySelector("input").value;
+    const total = qty * price || 0;
+    row.cells[4].innerText = total;
+    grand += total;
+  });
+  document.getElementById("grandTotal").innerText = grand;
+}
+
+/* ===== PRINT CLEAN ===== */
+function prepareAndPrint() {
+  document.querySelectorAll("#productTable tbody tr").forEach(row => {
+    const product = row.querySelector("select").value;
+    if (!product) row.style.display = "none";
+  });
+
+  window.print();
+
+  document.querySelectorAll("#productTable tbody tr").forEach(row => {
+    row.style.display = "";
+  });
+}
+
+/* ===== INVOICE NUMBER ===== */
+document.getElementById("invoiceNo").value =
+  "EXP-" + Date.now().toString().slice(-6);
+</script>
+
+</body>
+</html>
